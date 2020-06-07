@@ -430,6 +430,8 @@ class BackBroker(bt.BrokerBase):
             self.cash += c
 
         for data in datas or self.positions:
+            if type(data).__module__ == "fundamentals.data_feeds":
+                continue
             comminfo = self.getcommissioninfo(data)
             position = self.positions[data]
             # use valuesize:  returns raw value, rather than negative adj val
@@ -857,7 +859,7 @@ class BackBroker(bt.BrokerBase):
             exprice = order.created.pclose
         else:
             if not self.p.coo and order.data.datetime[0] <= order.created.dt:
-                return    # can only execute after creation time
+                return  # can only execute after creation time
 
             dtcoc = None
             exprice = popen
