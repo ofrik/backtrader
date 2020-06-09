@@ -62,7 +62,7 @@ class MetaStrategy(StrategyBase.__class__):
         super(MetaStrategy, cls).__init__(name, bases, dct)
 
         if not cls.aliased and \
-           name != 'Strategy' and not name.startswith('_'):
+                name != 'Strategy' and not name.startswith('_'):
             cls._indcol[name] = cls
 
     def donew(cls, *args, **kwargs):
@@ -268,7 +268,15 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
     def _getminperstatus(self):
         # check the min period status connected to datas
         dlens = map(operator.sub, self._minperiods, map(len, self.datas))
-        self._minperstatus = minperstatus = max(dlens)
+        all_lens = list(dlens)
+        for data, length in zip(self.datas, all_lens):
+            if length <= 0 and not data.is_ready:
+                data.is_ready = True
+        valid_datas = [all_lens[i] for i, data in enumerate(self.datas) if (not data.is_benchmark) and (data.is_ready)]
+        if len(valid_datas) == 0:
+            self._minperstatus = minperstatus = max(all_lens)
+        else:
+            self._minperstatus = minperstatus = min(valid_datas)
         return minperstatus
 
     def prenext_open(self):
